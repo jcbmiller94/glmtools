@@ -3,7 +3,7 @@
 
 import numpy as np
 import numpy.linalg as npl
-
+import scipy.stats as stats
 
 
 def glm(Y, X):
@@ -27,8 +27,13 @@ def glm(Y, X):
         degrees of freedom due to error.
     """
     # +++your code here+++
-    return
+    B = npl.pinv(X).dot(Y)
+    E = Y - X.dot(B) #residuals (Y - fitted data)
+    n = Y.shape[0] #number of observations per column
+    df = n - npl.matrix_rank(X) #df_error = n - p
+    sigma_2 = np.sum(E ** 2, axis = 0) / df
 
+    return B, sigma_2, df
 
 def t_test(c, X, B, sigma_2, df):
     """ Two-tailed t-test given contrast `c`, design `X`
@@ -54,4 +59,13 @@ def t_test(c, X, B, sigma_2, df):
         two-tailed probability value for each t statistic.
     """
     # Your code code here
-    return
+    n = X.shape[0] #number of observations in each column of X
+
+    c_b_cov = c.dot(npl.pinv(X.T.dot(X))).dot(c) #from in-class exercise on Monday
+    t = c.dot(B) / np.sqrt(sigma_2 * c_b_cov)
+
+    t_dist = stats.t(df=df)
+    p_value = 1 - t_dist.cdf(abs(t)) #have to use absolute value to account for different possible contrasts
+    p = 2*p_value #two-tailed probability value
+
+    return t, p

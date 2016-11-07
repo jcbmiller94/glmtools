@@ -27,7 +27,22 @@ def glm_4d(Y, X):
         degrees of freedom due to error.
     """
     # +++your code here+++
-    return
+
+    n_voxels = Y.shape[0]*Y.shape[1]*Y.shape[2]
+    n_timepoints = Y.shape[3]
+
+    #- Transpose to give time by voxel 2D
+    Y_2D = np.reshape(Y,(n_voxels,n_timepoints)).T
+
+    #get betas for 2d reshaped array
+    B, sigma_2, df = glm(Y_2D, X)
+
+    #reshape betas to return correctly in their original shape
+    B = B.T
+    B = np.reshape(B, (Y.shape[0], Y.shape[1], Y.shape[2], X.shape[-1]))
+    sigma_2 = sigma_2.reshape((Y.shape[0], Y.shape[1], Y.shape[2]))
+
+    return B, sigma_2, df
 
 
 def t_test_3d(c, X, B, sigma_2, df):
@@ -54,4 +69,14 @@ def t_test_3d(c, X, B, sigma_2, df):
         two-tailed probability value for each t statistic.
     """
     # Your code code here
-    return
+
+    n_voxels = B.shape[0]*B.shape[1]*B.shape[2]
+    B_2D = B.reshape(n_voxels, X.shape[-1])
+    B_2D = B_2D.T
+    s_2_1D = sigma_2.reshape(n_voxels)
+
+    t, p = t_test(c, X, B_2D, s_2_1D, df)
+
+    t_3D = t.reshape((B.shape[0], B.shape[1], B.shape[2]))
+
+    return t_3D, p
